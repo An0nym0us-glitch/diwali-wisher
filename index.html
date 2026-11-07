@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Diwali Wish Maker – send a personal Diwali wish</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Type two names and download a personal, animated Diwali wish as a single HTML file that works offline.">
+<meta name="theme-color" content="#14062e">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+/* Same palette, fonts and surfaces as the Diwali wish template, so the maker feels like part of it. */
+:root{
+  --sky-top:#14062e; --sky-mid:#2b0f45; --sky-low:#5a1a3a;
+  --ink:#fff4dc; --ink-dim:rgba(255,244,220,.76);
+  --gold:#ffc857; --amber:#ff9f1c; --ember:#ff5d2e; --rose:#ff3d81;
+  --panel:rgba(30,11,50,.68); --line:rgba(255,200,87,.3);
+  --error:#ffb4a2;
+  --font-ui:'Poppins',system-ui,-apple-system,'Segoe UI','Noto Sans Devanagari','Nirmala UI',sans-serif;
+  --font-display:'Yatra One','Poppins','Noto Sans Devanagari','Nirmala UI',Georgia,serif;
+  box-sizing:border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --sky-top:#070215; --sky-mid:#190833; --sky-low:#3b0f2e; --panel:rgba(14,5,28,.7); }
+}
+:root[data-theme="dark"]{ --sky-top:#070215; --sky-mid:#190833; --sky-low:#3b0f2e; --panel:rgba(14,5,28,.7); }
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html{background:var(--sky-top)}
+body{
+  margin:0;min-height:100vh;min-height:100dvh;color:var(--ink);font-family:var(--font-ui);
+  background:radial-gradient(90% 60% at 50% 100%,rgba(255,150,40,.18),transparent 70%),linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 55%,var(--sky-low) 100%) fixed;
+  background-color:var(--sky-top);
+  -webkit-tap-highlight-color:transparent;overflow-x:hidden;
+}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+
+/* drifting embers, as on the template's welcome screen */
+.embers{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.ember{
+  position:absolute;bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;opacity:0;
+  background:radial-gradient(circle,#ffe9a0,#ff9f1c 60%,transparent 72%);
+  animation:emberUp var(--d) linear var(--dl) infinite;
+}
+@keyframes emberUp{0%{opacity:0;transform:translate(0,0)}10%{opacity:.9}100%{opacity:0;transform:translate(var(--dx),-105vh)}}
+.toran{
+  position:fixed;top:0;left:-4px;right:-4px;height:30px;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(circle at 14px 13px,#ffd23f 0 5px,#ff9f1c 5.5px 9px,transparent 9.5px) 0 0/28px 30px repeat-x,
+    linear-gradient(#8a4a1a,#8a4a1a) 0 3px/100% 2px no-repeat;
+  animation:toran 5s ease-in-out infinite alternate;
+}
+@keyframes toran{from{transform:translateX(-3px)}to{transform:translateX(3px)}}
+
+.wrap{
+  position:relative;z-index:2;max-width:1040px;margin:0 auto;
+  padding:44px max(16px,env(safe-area-inset-right,0px)) calc(32px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+}
+header{text-align:center;margin-bottom:22px}
+.hero-diya{width:84px;margin:0 auto 4px;position:relative}
+.hero-diya svg{width:100%;height:auto;display:block;position:relative}
+.hero-diya .glow{
+  position:absolute;left:50%;top:30%;width:190%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,190,70,.55),rgba(255,120,30,.18) 45%,transparent 70%);
+  animation:glowPulse 2.4s ease-in-out infinite;pointer-events:none;
+}
+.hero-diya .flick{transform-box:fill-box;transform-origin:50% 100%;animation:flick .8s ease-in-out infinite alternate}
+@keyframes flick{
+  0%{transform:scale(1,1) rotate(-1.5deg)}30%{transform:scale(.93,1.08) rotate(2deg)}
+  60%{transform:scale(1.05,.94) rotate(-2.5deg)}100%{transform:scale(.97,1.05) rotate(1.5deg)}
+}
+@keyframes glowPulse{0%,100%{opacity:.82}50%{opacity:1}}
+h1{
+  margin:0;font:400 clamp(34px,9vw,56px)/1.08 var(--font-display);
+  background:linear-gradient(90deg,#ffe29a,#ffb11f 55%,#ff7a45);-webkit-background-clip:text;background-clip:text;color:transparent;
+  padding-bottom:4px;
+}
+.sub{margin:6px auto 0;max-width:46ch;font-size:14px;line-height:1.6;color:var(--ink-dim)}
+
+.grid{display:grid;gap:18px;align-items:start}
+@media (min-width:880px){ .grid{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)} }
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:26px;padding:22px 20px;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 0 60px rgba(255,150,40,.16);
+}
+.card h2{margin:0 0 4px;font:400 22px/1.3 var(--font-display);color:var(--gold)}
+.card .lead{margin:0 0 16px;font-size:13px;line-height:1.55;color:var(--ink-dim)}
+
+.field{margin-bottom:14px}
+.field label{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px;font-weight:500;margin-bottom:6px}
+.field label small{font-weight:400;color:var(--ink-dim);font-size:11px}
+.field input{
+  width:100%;padding:12px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.08);
+  color:var(--ink);font:400 16px var(--font-ui);transition:border-color .2s,box-shadow .2s;
+}
+.field input::placeholder{color:var(--ink-dim);opacity:.8}
+.field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,200,87,.22)}
+.field input[aria-invalid="true"]{border-color:var(--error);box-shadow:0 0 0 3px rgba(255,120,100,.2)}
+.err{margin:6px 6px 0;font-size:12px;color:var(--error);min-height:0}
+.err:empty{display:none}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.btn{
+  border:0;border-radius:999px;padding:13px 24px;font:600 15px var(--font-ui);color:#2a0b1e;cursor:pointer;
+  background:linear-gradient(135deg,#ffe29a,#ffb11f 55%,#ff8a3d);box-shadow:0 6px 24px rgba(255,150,40,.45);
+  transition:transform .15s,opacity .2s;
+}
+.btn:active{transform:scale(.96)}
+.btn[disabled]{opacity:.55;cursor:default;transform:none}
+.chip{
+  border:1px solid var(--line);background:rgba(255,200,87,.1);padding:9px 15px;border-radius:999px;
+  font:500 13px var(--font-ui);cursor:pointer;transition:transform .12s;
+}
+.chip:active{transform:scale(.95)}
+.status{margin:12px 2px 0;font-size:13px;line-height:1.5;color:var(--ink-dim);min-height:1.5em}
+.status.bad{color:var(--error)}
+.privacy{margin:16px 0 0;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;line-height:1.55;color:var(--ink-dim)}
+
+/* live preview: a miniature of the template's final wish card */
+.label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:10px}
+.mini{
+  text-align:center;padding:22px 18px;border-radius:22px;background:rgba(24,8,44,.82);border:1px solid var(--line);
+  box-shadow:0 0 50px rgba(255,150,40,.25);display:flex;flex-direction:column;gap:8px;align-items:center;
+}
+.mini .kicker{margin:0;font-size:13px;color:var(--ink-dim)}
+.mini .kicker b{color:var(--gold);font-weight:600}
+.mini .fd{font-size:40px;line-height:1}
+.mini h3{margin:0;font:400 clamp(26px,6.5vw,36px)/1.15 var(--font-display);color:#ffd978;text-shadow:0 0 24px rgba(255,160,40,.8);overflow-wrap:anywhere}
+.mini .hi{margin:0;font:400 19px/1.35 var(--font-display)}
+.mini .msg{margin:0;font-size:13px;line-height:1.6;color:var(--ink-dim);max-width:40ch}
+.mini .from{margin:2px 0 0;font:400 20px/1.3 var(--font-display);color:var(--gold);overflow-wrap:anywhere}
+.mini .from small{display:block;font:400 12px/1.4 var(--font-ui);color:var(--ink-dim)}
+.ph{opacity:.5}
+
+.result{margin-top:18px}
+.result .head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.result .fname{font-size:12px;color:var(--ink-dim);overflow-wrap:anywhere}
+.result .fname b{color:var(--ink);font-weight:500}
+.frame{
+  position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#0a0318;
+  height:min(70vh,620px);min-height:440px;box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+.frame iframe{display:block;width:100%;height:100%;border:0}
+.result .tip{margin:8px 2px 0;font-size:12px;color:var(--ink-dim)}
+.result .actions{margin-top:14px}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,16px);z-index:60;
+  max-width:min(88vw,440px);padding:10px 18px;border-radius:999px;background:rgba(20,6,40,.94);border:1px solid var(--line);
+  font-size:13px;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+@media (prefers-reduced-motion: reduce){
+  .toran,.ember,.hero-diya .glow,.hero-diya .flick{animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gClay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2672f"/><stop offset="1" stop-color="#7d2a0d"/></linearGradient>
+    <linearGradient id="gRim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f08a45"/><stop offset="1" stop-color="#a8431a"/></linearGradient>
+    <linearGradient id="gFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a00"/><stop offset=".55" stop-color="#ffb11f"/><stop offset="1" stop-color="#ffe27a"/></linearGradient>
+    <linearGradient id="gFlameIn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset="1" stop-color="#ffe9a0"/></linearGradient>
+  </defs>
+</svg>
+<div class="embers" id="embers" aria-hidden="true"></div>
+<div class="toran" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header>
+    <div class="hero-diya" aria-hidden="true">
+      <span class="glow"></span>
+      <svg viewBox="0 0 100 110" focusable="false">
+        <rect x="48" y="50" width="4" height="13" rx="2" fill="#2a1608"/>
+        <path d="M10 64 C12 90 32 102 50 102 C68 102 88 90 90 64 C76 72 64 74 50 74 C36 74 24 72 10 64Z" fill="url(#gClay)"/>
+        <ellipse cx="50" cy="64" rx="40" ry="9.5" fill="url(#gRim)"/>
+        <ellipse cx="50" cy="64" rx="33" ry="6" fill="#2b1206"/>
+        <ellipse cx="50" cy="63" rx="26" ry="3.6" fill="#7a4310" opacity=".55"/>
+        <circle cx="30" cy="85" r="2.4" fill="#ffd36b"/><circle cx="50" cy="91" r="2.4" fill="#ffd36b"/><circle cx="70" cy="85" r="2.4" fill="#ffd36b"/>
+        <path d="M24 78 Q50 90 76 78" stroke="#ffd36b" stroke-width="1.6" fill="none" opacity=".8"/>
+        <g class="flick">
+          <path d="M50 8 C63 28 70 43 59 53 C55 57 45 57 41 53 C30 43 37 28 50 8Z" fill="url(#gFlame)"/>
+          <path d="M50 30 C57 41 59 47 54 52 C52 54 48 54 46 52 C41 47 43 41 50 30Z" fill="url(#gFlameIn)"/>
+        </g>
+      </svg>
+    </div>
+    <h1>Diwali Wish Maker</h1>
+    <p class="sub">शुभ दीपावली · Type two names, get a personal, animated Diwali wish as one HTML file you can send to anyone.</p>
+  </header>
+
+  <main class="grid">
+    <section class="card" aria-labelledby="formTitle">
+      <h2 id="formTitle">Make your wish</h2>
+      <p class="lead">They will light diyas, burst crackers and catch mithai, then find your wish waiting for them.</p>
+      <form id="wishForm" novalidate autocomplete="off">
+        <div class="field">
+          <label for="sender">Your name <small>from</small></label>
+          <input id="sender" name="sender" type="text" maxlength="24" placeholder="e.g. Neo" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="next" aria-describedby="senderErr">
+          <p class="err" id="senderErr" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="receiver">Their name <small>to</small></label>
+          <input id="receiver" name="receiver" type="text" maxlength="24" placeholder="e.g. Rahul" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-describedby="receiverErr">
+          <p class="err" id="receiverErr" role="alert"></p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="generateBtn" type="submit">🪔 Generate Diwali Wish</button>
+          <button class="chip" id="clearBtn" type="button">Clear</button>
+        </div>
+        <p class="status" id="status" aria-live="polite"></p>
+      </form>
+      <p class="privacy">Everything happens in your browser. Names are never uploaded or saved, and the maker resets itself after each download so the next person starts fresh.</p>
+    </section>
+
+    <section class="card" aria-labelledby="previewTitle">
+      <h2 id="previewTitle" class="sr">Preview</h2>
+      <span class="label">Live preview</span>
+      <div class="mini" id="mini" aria-live="polite">
+        <p class="kicker">A little light from <b id="pvFrom1" class="ph">you</b>, just for you, <b id="pvTo1" class="ph">them</b></p>
+        <div class="fd" aria-hidden="true">🪔</div>
+        <h3>Happy Diwali, <span id="pvTo2" class="ph">…</span>!</h3>
+        <p class="hi">दीपावली की हार्दिक शुभकामनाएँ!</p>
+        <p class="msg">May the light of every diya you lit today bring joy, good health and prosperity to you and everyone you love.</p>
+        <p class="from"><small>With love and light,</small><span id="pvFrom2" class="ph">your name</span></p>
+      </div>
+
+      <div class="result" id="result" hidden>
+        <div class="head">
+          <span class="label" style="margin:0">Your wish, exactly as they will see it</span>
+          <span class="fname">File: <b id="fileName"></b></span>
+        </div>
+        <div class="frame" id="frameBox"></div>
+        <p class="tip">Try it here: tap the big diya to begin. Sound plays after your first tap.</p>
+        <div class="actions">
+          <button class="btn" id="downloadBtn" type="button">⬇️ Download HTML</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p style="position:fixed;inset:auto 0 40% 0;text-align:center;z-index:99">Please turn on JavaScript to make a Diwali wish.</p></noscript>
+
+<script src="js/personalize.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
